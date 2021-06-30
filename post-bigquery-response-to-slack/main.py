@@ -33,8 +33,10 @@ def main_function(event, context=None):
         sql_query_clean = sql_query.replace("\n", " ")
         response = BQ.query(query=sql_query_clean)
         response_list = [dict(row) for row in response]
+        print('response_list:')
+        print(response_list)
+        
         post_text = str(response_list[0]['post_text'])
-
         print("post_text:")
         print(post_text) 
 
@@ -55,7 +57,7 @@ def main_function(event, context=None):
         pprint(slack_response)
 
     except Exception as e:
-        print(e)     
+        print("ERROR:", e)     
 
 
 # function execution for local test environment
@@ -72,5 +74,5 @@ if os.environ.get('ENVIRONMENT_TYPE')  == "TEST":
     FROM `tripscout-151203.instagram_insights._bi_user_mention_permission_status_summary` 
     WHERE post_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY) 
     """}} 
-    
+
     main_function(test_event)
