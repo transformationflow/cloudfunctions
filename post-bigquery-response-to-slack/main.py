@@ -1,5 +1,3 @@
-import base64
-import json
 import os
 import requests
 
@@ -70,7 +68,7 @@ if os.environ.get('ENVIRONMENT_TYPE')  == "TEST":
     SELECT ARRAY_TO_STRING(ARRAY_AGG(FORMAT(
     'ALERT: %d violation(s) and %d potential violation(s) from %d posts on %t',  
     requested_count + has_other_permissions_count + not_requested_count + denied_count, one_image_permitted_count, all_posts, post_date)
-    ), '\\n') AS post_text
+    ), '\n') AS post_text
     FROM `tripscout-151203.instagram_insights._bi_user_mention_permission_status_summary` 
     WHERE post_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY) 
     """}} 
