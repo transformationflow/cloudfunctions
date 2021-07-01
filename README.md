@@ -38,12 +38,12 @@ Cloud functions to support development, management and monitoring of BigQuery da
 
   A single string will be posted to the channel, however it is possible to construct sentences with line breaks from query column values using the following native BigQuery functions:
 
-  - [FORMAT](https://cloud.google.com/bigquery/docs/reference/standard-sql/string_functions#format_string) - allows injection of column values into a string using '%' 
-  - [ARRAY_AGG](https://cloud.google.com/bigquery/docs/reference/standard-sql/aggregate_functions#array_agg) - aggregates a column (containing e.g. strings with injected column values) into an array
-  - [ARRAY_TO_STRING](https://cloud.google.com/bigquery/docs/reference/standard-sql/array_functions#array_to_string) - converts an array into a delimited string. Delimiting on '\n' results in each sentence being written on a new line
+  - [FORMAT](https://cloud.google.com/bigquery/docs/reference/standard-sql/string_functions#format_string) - allows injection of column values into a string using %-prefixed format specifiers (e.g. %s - string, %d - integer).
+  - [ARRAY_AGG](https://cloud.google.com/bigquery/docs/reference/standard-sql/aggregate_functions#array_agg) - aggregates a column (containing e.g. strings with injected column values) into an array.
+  - [ARRAY_TO_STRING](https://cloud.google.com/bigquery/docs/reference/standard-sql/array_functions#array_to_string) - converts an array into a delimited string. Delimiting on '\n' results in each sentence being written on a new line.
 
   #### Example Query
-  The following query structure will output a string as `post_text` which can then be pasted into the `sql_query` attribute and will then be posted to a slack channel on a schedule:
+  The following query structure will output a single string as `post_text`, which will be posted to the specified Slack channel. Once a query is tested in BigQuery, this can be directly pasted into the `sql_query` attribute in the relevant Cloud Scheduler Job, and the `post_text` will then be posted to a slack channel on the defined schedule:
 
 
 ```
@@ -64,14 +64,12 @@ WHERE ingestion_date >= DATE_SUB('2021-06-21', INTERVAL 2 DAY)
 
 ```
 
-This results in the following formatted and line-broken string as `post_text`, in a format which would be simple:
+This results in the following formatted and line-broken string as `post_text`:
 
 ```
 ALERT: 14 critical error(s) and 6 minor error(s) from 4934 records on 2021-06-21
 ALERT: 25 critical error(s) and 34 minor error(s) from 7856 records on 2021-06-20
 ALERT: 45 critical error(s) and 65 minor error(s) from 9843 records on 2021-06-19
 ```
-
-  
 
 </details>
