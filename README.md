@@ -7,6 +7,19 @@ Cloud functions to support development, management and monitoring of BigQuery da
   ### Overview
   This function will execute a single SQL query and post the response to a Slack channel on a schedule.  Any logic needs to be written in the SQL.
 
+  ### Architecture
+  ![Architecture](post-bigquery-response-to-slack/assets/post-bq-response-to-slack.png)
+
+  The deployed architecture leverages the following Google Cloud Platform resources:
+
+  sequence | resource | description
+  :-: | --- | --- 
+  1 | Cloud Scheduler | Serverless PubSub trigger with configurable attributes
+  2 | PubSub | Messaging to trigger Cloud Function with configured attributes
+  3 | Cloud Function | Python 3.8 function (post-bigquery-response-to-slack)[https://github.com/transformationflow/cloudfunctions/tree/main/post-bigquery-response-to-slack]
+  4 | BigQuery | Accessed via google-cloud-bigquery client library (with additional drive scopes for federated table access)
+  5 | Secret Manager | Secure storage of Slack Access key
+
   ### Configuration
   Configuration is set via the following parameters in the Cloud Scheduler job: 
   parameter | section | description
@@ -55,17 +68,6 @@ ALERT: 25 critical error(s) and 34 minor error(s) from 7856 records on 2021-06-2
 ALERT: 45 critical error(s) and 65 minor error(s) from 9843 records on 2021-06-19
 ```
 
-  ### Architecture
-  ![Architecture](post-bigquery-response-to-slack/assets/post-bq-response-to-slack.png)
-
-  The deployed architecture leverages the following Google Cloud Platform resources:
-
-  sequence | resource | description
-  :-: | --- | --- 
-  1 | Cloud Scheduler | Serverless PubSub trigger with configurable attributes
-  2 | PubSub | Messaging to trigger Cloud Function with configured attributes
-  3 | Cloud Function | Python 3.8 function post-bigquery-response-to-slack
-  4 | BigQuery | Accessed via google-cloud-bigquery client library (with additional drive scopes for federated table access)
-  5 | Secret Manager | Secure storage of Slack Access key
+  
 
 </details>
