@@ -1,24 +1,27 @@
 # transformationflow/cloudfunctions
 
 Cloud functions to support development, management and monitoring of BigQuery data transformation flows.
+
 <details>
-<summary>post-bigquery-response-to-slack</summary>
+<summary> post-bigquery-response-to-slack </summary>
   
   ### Overview
   This function will execute a single SQL query and post the response to a Slack channel on a schedule.  Any logic needs to be written in the SQL.
 
   ### Architecture
   
+  #### Resources
   The deployed architecture leverages the following Google Cloud Platform resources:
 
-  sequence | resource | description
-  :-: | --- | --- 
-  1 | Cloud Scheduler | Serverless PubSub trigger with configurable attributes
-  2 | PubSub | Messaging to trigger Cloud Function with configured attributes
-  3 | Cloud Function | Python 3.8 function [post-bigquery-response-to-slack](https://github.com/transformationflow/cloudfunctions/tree/main/post-bigquery-response-to-slack)
-  4 | BigQuery | Accessed via google-cloud-bigquery client library (with additional drive scopes for federated table access)
-  5 | Secret Manager | Secure storage of Slack Access key
+  sequence | resource | default_name | description
+  :-: | --- | --- | ---
+  1 | Cloud Scheduler | `post-bigquery-response-to-slack` |Serverless PubSub trigger with configurable attributes
+  2 | PubSub | `post-bigquery-response-to-slack` | Messaging to trigger Cloud Function with configured attributes
+  3 | Cloud Function | `post-bigquery-response-to-slack` | Python 3.8 function [post-bigquery-response-to-slack](https://github.com/transformationflow/cloudfunctions/tree/main/post-bigquery-response-to-slack)
+  4 | BigQuery | n/a |Accessed via google-cloud-bigquery client library (with additional drive scopes for federated table access)
+  5 | Secret Manager | `slack-data-monitor` | Secure storage of Slack Access key
 
+  #### Resource Flow
   ![Architecture](post-bigquery-response-to-slack/assets/post-bq-response-to-slack.png)
 
   ### Configuration
@@ -26,9 +29,9 @@ Cloud functions to support development, management and monitoring of BigQuery da
   parameter | section | description
   --- | --- | ---
   Frequency | Job Definition | Cron schedule for job triggering
-  Pub/Sub Topic | Job Configuration | PubSub topic which triggers the deployed cloud function
+  Pub/Sub Topic | Job Configuration | PubSub topic which triggers the deployed cloud function (default: `post-bigquery-response-to-slack`)
   `slack_access_token_name` | Message Attributes | Name of secret in Secret Manager
-  `slack_channel` | Message Attributes | Channel to post query response (prefixed by '#' e.g. #data-monitoring)
+  `slack_channel` | Message Attributes | Channel to post query response (prefixed by '#' e.g. `#data-monitoring`)
   `sql_query` | Message Attributes | SQL query to execute.  This must return a column called post_text.
 
   To add an additional notifier, create a new Cloud Scheduler job with the required parameters.
