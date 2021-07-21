@@ -63,7 +63,7 @@ if os.environ.get('ENVIRONMENT_TYPE')  == "TEST":
 
     test_event = {'attributes': {
         'slack_access_token_name': 'slack-data-monitor',
-        'slack_channel': '#notify-tripscout-igmentions',
+        'slack_channel': '#ig-alerts',
         'sql_query': """
     SELECT ARRAY_TO_STRING(ARRAY_AGG(FORMAT(
     'ALERT: %d violation(s) and %d potential violation(s) from %d posts on %t',  
