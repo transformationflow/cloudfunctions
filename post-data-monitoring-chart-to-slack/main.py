@@ -1,7 +1,9 @@
-# placeholder for chart generation and slack channel post code
 import os
 import pandas as pd
 import altair as alt
+from altair_saver import save
+import requests
+from pprint import pprint
 
 import google.auth
 from google.cloud import bigquery, secretmanager
@@ -10,6 +12,9 @@ from google.cloud import bigquery, secretmanager
 def main_function(event, context=None):
     try:
  
+        # monitoring chart path
+        chart_path = 'tmp/inbound_data_monitoring.svg'
+
         # get slack attributes from scheduler payload
         slack_access_token_name = event['attributes']['slack_access_token_name']
         slack_channel = event['attributes']['slack_channel']
@@ -18,6 +23,7 @@ def main_function(event, context=None):
         inbound_monitoring_dataset_ref = event['attributes']['inbound_monitoring_dataset_ref']
         ingest_timestamp_column = event['attributes']['ingest_timestamp_column']
         table_exclusion_clause = event['attributes']['table_exclusion_clause']
+        specific_table_exclusions = event['attributes']['specific_table_exclusions']
 
         # construct bigquery client with drive scopes (for accessing federated gsheet tables)
         credentials, project = google.auth.default(
@@ -37,6 +43,7 @@ def main_function(event, context=None):
         all_table_info_schema AS (
         SELECT * FROM `{inbound_monitoring_dataset_ref}`.INFORMATION_SCHEMA.TABLES
         WHERE table_name NOT LIKE '{table_exclusion_clause}'
+        AND table_name NOT IN ({','.join(f"'{table}'" for table in specific_table_exclusions)})
         ),
 
         all_table_refs AS (
@@ -60,17 +67,103 @@ def main_function(event, context=None):
         FROM sql_out
         );
 
-
-        EXECUTE IMMEDIATE (initial_query_sql);
+        SELECT initial_query_sql;
         """
 
-        response = BQ.query(query=ingest_sql)
+        inbound_monitoring_response = BQ.query(query=ingest_sql)
+        inbound_monitoring_response_dict = [dict(row) for row in inbound_monitoring_response]
+        inbound_monitoring_sql = inbound_monitoring_response_dict[0]['initial_query_sql']
+
+        clean_gapless_monitoring_query = f"""
+        WITH 
+        ingest_records 
+        AS (
+        {inbound_monitoring_sql}
+        ),
+
+        date_array AS (
+        SELECT GENERATE_DATE_ARRAY(
+        (SELECT MIN(ingest_date) FROM ingest_records), 
+        (SELECT MAX(ingest_date) FROM ingest_records)) AS all_dates
+        ),
+
+        date_array_flat AS (
+        SELECT ingest_date 
+        FROM date_array, UNNEST (all_dates) AS ingest_date
+        ),
+
+        unique_tables AS (
+        SELECT DISTINCT table_name
+        FROM ingest_records
+        ),
+
+        date_table_scaffold AS (
+        SELECT * 
+        FROM unique_tables CROSS JOIN date_array_flat
+        ),
+
+        gapless_monitoring_data AS (
+        SELECT * FROM date_table_scaffold
+        LEFT JOIN ingest_records USING (table_name, ingest_date)
+        ),
+
+        gapless_monitoring_data_with_zeroes AS (
+        SELECT 
+        table_name, 
+        ingest_date, 
+        IFNULL(ingest_records, 0) AS ingest_records, 
+        IFNULL(ingest_records_flag, 0) AS ingest_records_flag 
+        FROM gapless_monitoring_data
+        )
+
+
+        SELECT * FROM gapless_monitoring_data_with_zeroes
+        ORDER BY ingest_date DESC, table_name
+        """
+
+        response = BQ.query(query=clean_gapless_monitoring_query)
         monitoring_df = response.to_dataframe()
         monitoring_df["ingest_date"] = pd.to_datetime(monitoring_df["ingest_date"])
 
 
+        # build chart and save to /tmp directory
+        inbound_monitoring_chart = alt.Chart(monitoring_df).mark_rect().encode(
+            x = alt.X('ingest_date:T', axis=alt.Axis(title='Ingest Date', labelAngle=-90, format="%d %b", tickCount=monitoring_df["ingest_date"].nunique()), sort='-x'),
+            y = alt.Y('table_name:O', title='Table Name', sort=alt.Sort(field='table_name', order='ascending')),
+            color=alt.Color('ingest_records_flag:Q', scale = alt.Scale(domain=[0,1], range = ['#67001f','#006837'], type='ordinal'), legend=None),
+            tooltip = [alt.Tooltip('table_name:O', title='Table Name'),
+                    alt.Tooltip('ingest_date:T', title='Ingested Date'),
+                    alt.Tooltip('ingest_records:Q', title='Records Ingested'),               
+                    alt.Tooltip('ingest_records_flag:Q', title='Any Records Flag')
+                    ]
+        ).configure_scale(rectBandPaddingInner=0.1
+        ).properties(width=900, title=f'Inbound Data Monitoring: {inbound_monitoring_dataset_ref}'
+        ).interactive()
+        
+        save(inbound_monitoring_chart, chart_path, webdriver='chrome')
         
 
+        # get slack access token from secret manager
+        secret_name = f"projects/{project}/secrets/{slack_access_token_name}/versions/latest"        
+        SM = secretmanager.SecretManagerServiceClient()
+        secret_response = SM.access_secret_version(name=secret_name)
+        slack_access_token = secret_response.payload.data.decode("UTF-8")
+
+        # convert image to bytes(?)
+
+
+        # send response to slack channel
+        slack_payload = {
+            'token': slack_access_token,
+            'channel': slack_channel,
+            'filename': 'inbound_data_monitoring',
+            'filetype': 'svg',
+            'initial_comment': 'comment',
+            'title': 'title'
+        }
+
+        slack_response = requests.post('https://slack.com/api/files.upload', slack_payload).json()
+        pprint(slack_response)
 
     except Exception as e:
         print("ERROR:", e)       
@@ -83,9 +176,10 @@ if os.environ.get('ENVIRONMENT_TYPE')  == "TEST":
     test_event = {'attributes': {
         'inbound_monitoring_dataset_ref': 'tripscout-151203.airbyte_instagram_sync',
         'table_exclusion_clause': '_airbyte%',
+        'specific_table_exclusions': ['media_0f8_owner', 'media_children', 'media_children_4f7_owner', 'media_children_owner', 'media_d39_children', 'stories_ce2_owner', 'stories_owner'],
         'ingest_timestamp_column': '_airbyte_emitted_at',
         'slack_access_token_name': 'beepbeep_data_monitor',
-        'slack_channel': '#ig-monitoring'
+        'slack_channel': '#ig-monitoring-dev'
         }} 
 
     main_function(test_event)
