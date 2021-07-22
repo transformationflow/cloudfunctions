@@ -32,7 +32,7 @@ Cloud functions to support development, management and monitoring of BigQuery da
   Pub/Sub Topic | Job Configuration | PubSub topic which triggers the deployed cloud function (default: `post-bigquery-response-to-slack`)
   `slack_access_token_name` | Message Attributes | Name of secret in Secret Manager
   `slack_channel` | Message Attributes | Channel to post query response (prefixed by '#' e.g. `#data-monitoring`)
-  `sql_query` | Message Attributes | SQL query to execute.  This must return a column called post_text.
+  `sql_query` | Message Attributes | SQL query to execute.  This must return a column called post_text; test will be displayed from the first row only.
 
   To add an additional notifier, create a new Cloud Scheduler job with the required parameters.
 
