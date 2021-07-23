@@ -1,12 +1,17 @@
+import altair as alt
+import google.auth
 import os
 import pandas as pd
-import altair as alt
-from altair_saver import save
 import requests
-from pprint import pprint
 
-import google.auth
+from altair_saver import save
+from datetime import datetime
 from google.cloud import bigquery, secretmanager
+from pprint import pprint
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPM
+
+
 
 
 def main_function(event, context=None):
@@ -14,6 +19,11 @@ def main_function(event, context=None):
  
         # monitoring chart path
         chart_path = 'tmp/inbound_data_monitoring.svg'
+        chart_path_png = 'tmp/inbound_data_monitoring.png'
+
+        # get current datetime for slack post title
+        now = datetime.now()
+        now_string = now.strftime("%Y-%m-%d %H:%M:%S")
 
         # get slack attributes from scheduler payload
         slack_access_token_name = event['attributes']['slack_access_token_name']
@@ -24,6 +34,7 @@ def main_function(event, context=None):
         ingest_timestamp_column = event['attributes']['ingest_timestamp_column']
         table_exclusion_clause = event['attributes']['table_exclusion_clause']
         specific_table_exclusions = event['attributes']['specific_table_exclusions']
+        days_to_display = event['attributes']['days_to_display']
 
         # construct bigquery client with drive scopes (for accessing federated gsheet tables)
         credentials, project = google.auth.default(
@@ -125,10 +136,11 @@ def main_function(event, context=None):
         monitoring_df = response.to_dataframe()
         monitoring_df["ingest_date"] = pd.to_datetime(monitoring_df["ingest_date"])
 
+        date_filtered_monitoring_df = monitoring_df[monitoring_df.ingest_date > datetime.now() - pd.to_timedelta(f"{days_to_display}day")]
 
         # build chart and save to /tmp directory
-        inbound_monitoring_chart = alt.Chart(monitoring_df).mark_rect().encode(
-            x = alt.X('ingest_date:T', axis=alt.Axis(title='Ingest Date', labelAngle=-90, format="%d %b", tickCount=monitoring_df["ingest_date"].nunique()), sort='-x'),
+        inbound_monitoring_chart = alt.Chart(date_filtered_monitoring_df).mark_rect().encode(
+            x = alt.X('ingest_date:T', axis=alt.Axis(title='Ingest Date', labelAngle=-90, format="%d %b", tickCount=date_filtered_monitoring_df["ingest_date"].nunique()), sort='-x'),
             y = alt.Y('table_name:O', title='Table Name', sort=alt.Sort(field='table_name', order='ascending')),
             color=alt.Color('ingest_records_flag:Q', scale = alt.Scale(domain=[0,1], range = ['#67001f','#006837'], type='ordinal'), legend=None),
             tooltip = [alt.Tooltip('table_name:O', title='Table Name'),
@@ -149,20 +161,25 @@ def main_function(event, context=None):
         secret_response = SM.access_secret_version(name=secret_name)
         slack_access_token = secret_response.payload.data.decode("UTF-8")
 
-        # convert image to bytes(?)
+        # Convert SVG into bytes
+        chart_bytes = svg2rlg(chart_path)
+        renderPM.drawToFile(chart_bytes, chart_path_png, fmt="PNG")
+
+        with open(chart_path_png, "rb") as f:
+            file_bytes = f.read()
 
 
         # send response to slack channel
         slack_payload = {
             'token': slack_access_token,
-            'channel': slack_channel,
+            'channels': slack_channel,
             'filename': 'inbound_data_monitoring',
-            'filetype': 'svg',
-            'initial_comment': 'comment',
-            'title': 'title'
+            'filetype': 'png',
+            'initial_comment': f'{inbound_monitoring_dataset_ref}',
+            'title': f'Observation time: {now_string}'
         }
 
-        slack_response = requests.post('https://slack.com/api/files.upload', slack_payload).json()
+        slack_response = requests.post('https://slack.com/api/files.upload', slack_payload, files = { 'file': file_bytes }).json()
         pprint(slack_response)
 
     except Exception as e:
@@ -179,7 +196,8 @@ if os.environ.get('ENVIRONMENT_TYPE')  == "TEST":
         'specific_table_exclusions': ['media_0f8_owner', 'media_children', 'media_children_4f7_owner', 'media_children_owner', 'media_d39_children', 'stories_ce2_owner', 'stories_owner'],
         'ingest_timestamp_column': '_airbyte_emitted_at',
         'slack_access_token_name': 'beepbeep_data_monitor',
-        'slack_channel': '#ig-monitoring-dev'
+        'slack_channel': '#ig-monitoring-dev',
+        'days_to_display': 60
         }} 
 
     main_function(test_event)
