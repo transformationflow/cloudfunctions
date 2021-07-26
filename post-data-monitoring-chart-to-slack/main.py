@@ -18,8 +18,6 @@ def main_function(event, context=None):
         # monitoring chart path
         chart_path = 'tmp/inbound_data_monitoring.svg'
         chart_path_png = 'tmp/inbound_data_monitoring.png'
-        chart_path_jpg = 'tmp/inbound_data_monitoring.jpg'
-
 
         # get current datetime for slack post title
         now = datetime.now()
@@ -168,7 +166,6 @@ def main_function(event, context=None):
         with open(chart_path_png, "rb") as f:
             file_bytes = f.read()
 
-
         # send response to slack channel
         slack_payload = {
             'token': slack_access_token,
@@ -184,7 +181,6 @@ def main_function(event, context=None):
 
     except Exception as e:
         print("ERROR:", e)       
-
 
 
 # function execution for local test environment
