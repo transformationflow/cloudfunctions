@@ -20,6 +20,9 @@ def main_function(event, context=None):
         # monitoring chart path
         chart_path = 'tmp/inbound_data_monitoring.svg'
         chart_path_png = 'tmp/inbound_data_monitoring.png'
+        chart_path_jpg = 'tmp/inbound_data_monitoring.jpg'
+        chart_path_out = 'tmp/inbound_data_monitoring.pct'
+
 
         # get current datetime for slack post title
         now = datetime.now()
@@ -161,11 +164,14 @@ def main_function(event, context=None):
         secret_response = SM.access_secret_version(name=secret_name)
         slack_access_token = secret_response.payload.data.decode("UTF-8")
 
+        # outut file options
+        # TIFF','TIFFP','TIFFL','TIF','TIFF1', 'PCT' [X],'PICT', 'JPG','JPEG', 'GIF', 'PNG' [X],'BMP' [X], 'PPM'
+
         # Convert SVG into bytes
         chart_bytes = svg2rlg(chart_path)
-        renderPM.drawToFile(chart_bytes, chart_path_png, fmt="PNG")
+        renderPM.drawToFile(chart_bytes, chart_path_out, fmt="PCT")
 
-        with open(chart_path_png, "rb") as f:
+        with open(chart_path_out, "rb") as f:
             file_bytes = f.read()
 
 
@@ -174,7 +180,7 @@ def main_function(event, context=None):
             'token': slack_access_token,
             'channels': slack_channel,
             'filename': 'inbound_data_monitoring',
-            'filetype': 'png',
+            'filetype': 'pct',
             'initial_comment': f'{inbound_monitoring_dataset_ref}',
             'title': f'Observation time: {now_string}'
         }
