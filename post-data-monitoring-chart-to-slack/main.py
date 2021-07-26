@@ -8,10 +8,7 @@ from altair_saver import save
 from datetime import datetime
 from google.cloud import bigquery, secretmanager
 from pprint import pprint
-# from svglib.svglib import svg2rlg
-# from reportlab.graphics import renderPM
 
-#from wand.image import Image
 import cairosvg
 
 
