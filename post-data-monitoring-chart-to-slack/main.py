@@ -164,9 +164,11 @@ def main_function(event, context=None):
         MAC64_DIR_PATH = os.path.join(TMP_DIR_PATH, "mac64")
         CHROMEDRIVER_FILE_PATH = os.path.join(MAC64_DIR_PATH, "chromedriver.exe")
         
+        print(f"Chromedriver file path: {CHROMEDRIVER_FILE_PATH}, Temp directory: {TMP_DIR_PATH}")
         #chrome_webdriver = webdriver.Chrome(executable_path=r"/tmp/mac64/chromedriver.exe", service_log_path="/tmp")
-        chrome_webdriver = webdriver.Chrome(executable_path=CHROMEDRIVER_FILE_PATH, service_log_path=TMP_DIR_PATH)
+        chrome_webdriver = webdriver.Chrome
 
+        # chrome_webdriver = webdriver.Chrome(executable_path=CHROMEDRIVER_FILE_PATH, service_log_path=TMP_DIR_PATH)
 
         #chrome_webdriver = webdriver.Chrome(executable_path=r"/tmp/linux64/chromedriver.exe", service_log_path="/tmp")
         save(inbound_monitoring_chart, chart_path, webdriver=chrome_webdriver)
