@@ -4,3 +4,5 @@ post-data-monitoring-chart-to-slack/venv-dmcsl
 post-data-monitoring-chart-to-slack/auth
 scratch.md
 tmp
+console
+./console
