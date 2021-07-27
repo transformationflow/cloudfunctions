@@ -157,7 +157,7 @@ def main_function(event, context=None):
         #sys.path.append('/Users/JimBarlow/transformationflow/cloudfunctions/post-data-monitoring-chart-to-slack/chromedriver.exe')
         #export PATH="$PATH:/Users/JimBarlow/transformationflow/cloudfunctions/post-data-monitoring-chart-to-slack/chromedriver.exe"
 
-        chrome_webdriver = webdriver.Chrome(executable_path=r"/tmp/mac64/chromedriver.exe", service_log_path="/tmp")
+        chrome_webdriver = webdriver.Chrome(executable_path=r"/tmp/linux64/chromedriver.exe", service_log_path="/tmp")
         save(inbound_monitoring_chart, chart_path, webdriver=chrome_webdriver)
         
 
