@@ -153,10 +153,11 @@ def main_function(event, context=None):
         ).interactive()
 
         print("Using Chrome Webdriver")
+        # attempted the following to set path:
         #sys.path.append('/Users/JimBarlow/transformationflow/cloudfunctions/post-data-monitoring-chart-to-slack/chromedriver.exe')
         #export PATH="$PATH:/Users/JimBarlow/transformationflow/cloudfunctions/post-data-monitoring-chart-to-slack/chromedriver.exe"
 
-        chrome_webdriver = webdriver.Chrome(executable_path=r"/Users/JimBarlow/transformationflow/cloudfunctions/post-data-monitoring-chart-to-slack/chromedriver.exe", service_log_path="/tmp")
+        chrome_webdriver = webdriver.Chrome(executable_path=r"/tmp/mac64/chromedriver.exe", service_log_path="/tmp")
         save(inbound_monitoring_chart, chart_path, webdriver=chrome_webdriver)
         
 
@@ -190,12 +191,6 @@ def main_function(event, context=None):
 
 
 # function execution for local test environment
-
-if os.environ.get('ENVIRONMENT_TYPE')  == "TEST":
-    path_to_chromedriver = '/tmp/mac64/chromedriver.exe'
-else:
-    path_to_chromedriver = '/tmp/linux64/chromedriver.exe'
- 
 
 if os.environ.get('ENVIRONMENT_TYPE')  == "TEST":
 
