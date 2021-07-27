@@ -212,8 +212,8 @@ if os.environ.get('ENVIRONMENT_TYPE')  == "TEST":
         'table_exclusion_clause': '_airbyte%',
         'specific_table_exclusions': ['media_0f8_owner', 'media_children', 'media_children_4f7_owner', 'media_children_owner', 'media_d39_children', 'stories_ce2_owner', 'stories_owner'],
         'ingest_timestamp_column': '_airbyte_emitted_at',
-        'slack_access_token_name': 'beepbeep_data_monitor',
-        'slack_channel': '#ig-monitoring-dev',
+        'slack_access_token_name': 'slack-data-monitor',
+        'slack_channel': '#ig-alerts',
         'days_to_display': 60
         }} 
 
