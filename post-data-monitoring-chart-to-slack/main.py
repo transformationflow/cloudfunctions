@@ -156,8 +156,16 @@ def main_function(event, context=None):
         # attempted the following to set path:
         #sys.path.append('/Users/JimBarlow/transformationflow/cloudfunctions/post-data-monitoring-chart-to-slack/chromedriver.exe')
         #export PATH="$PATH:/Users/JimBarlow/transformationflow/cloudfunctions/post-data-monitoring-chart-to-slack/chromedriver.exe"
-
-        chrome_webdriver = webdriver.Chrome(executable_path=r"/tmp/mac64/chromedriver.exe", service_log_path="/tmp")
+        
+        # PATHs
+        ABSPATH = os.path.abspath(__file__) # e.g: c:/root_folder/main.py
+        DIRPATH = os.path.dirname(ABSPATH) # e.g: c:/root_folder/
+        TMP_DIR_PATH = os.path.join(DIRPATH, "tmp") # create "tmp" folder path. e.g: c:/root_folder/tmp
+        MAC64_DIR_PATH = os.path.join(TMP_DIR_PATH, "mac64")
+        CHROMEDRIVER_FILE_PATH = os.path.join(MAC64_DIR_PATH, "chromedriver.exe")
+        
+        #chrome_webdriver = webdriver.Chrome(executable_path=r"/tmp/mac64/chromedriver.exe", service_log_path="/tmp")
+        chrome_webdriver = webdriver.Chrome(executable_path=CHROMEDRIVER_FILE_PATH, service_log_path=TMP_DIR_PATH)
         save(inbound_monitoring_chart, chart_path, webdriver=chrome_webdriver)
         
 
