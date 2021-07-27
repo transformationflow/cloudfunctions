@@ -8,6 +8,7 @@ from altair_saver import save
 from datetime import datetime
 from google.cloud import bigquery, secretmanager
 from pprint import pprint
+from selenium import webdriver
 
 import cairosvg
 
@@ -150,7 +151,9 @@ def main_function(event, context=None):
         ).properties(width=900, title=f'Inbound Data Monitoring: {inbound_monitoring_dataset_ref}'
         ).interactive()
         
-        save(inbound_monitoring_chart, chart_path, webdriver='chrome')
+        chrome_webdriver = webdriver.Chrome
+        print("Using Chrome Webdriver")
+        save(inbound_monitoring_chart, chart_path, webdriver=chrome_webdriver)
         
 
         # get slack access token from secret manager
@@ -161,7 +164,6 @@ def main_function(event, context=None):
 
         # convert SVG chart to PNG
         output = cairosvg.svg2png(url=chart_path, write_to=chart_path_png)
-        print(type(output))
 
         with open(chart_path_png, "rb") as f:
             file_bytes = f.read()
@@ -191,9 +193,16 @@ if os.environ.get('ENVIRONMENT_TYPE')  == "TEST":
         'table_exclusion_clause': '_airbyte%',
         'specific_table_exclusions': ['media_0f8_owner', 'media_children', 'media_children_4f7_owner', 'media_children_owner', 'media_d39_children', 'stories_ce2_owner', 'stories_owner'],
         'ingest_timestamp_column': '_airbyte_emitted_at',
-        'slack_access_token_name': 'slack-data-monitor',
-        'slack_channel': '#ig-alerts',
+        'slack_access_token_name': 'beepbeep_data_monitor',
+        'slack_channel': '#ig-monitoring-dev',
         'days_to_display': 60
         }} 
 
     main_function(test_event)
+
+    # 'slack_access_token_name': 'beepbeep_data_monitor', 
+    # 'slack_channel': '#ig-monitoring-dev',
+
+    # 'slack_access_token_name': 'slack-data-monitor',
+    # 'slack_channel': '#ig-alerts',
+
