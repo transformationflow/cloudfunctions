@@ -3,6 +3,7 @@ import google.auth
 import os
 import pandas as pd
 import requests
+import sys
 
 from altair_saver import save
 from datetime import datetime
@@ -150,9 +151,12 @@ def main_function(event, context=None):
         ).configure_scale(rectBandPaddingInner=0.1
         ).properties(width=900, title=f'Inbound Data Monitoring: {inbound_monitoring_dataset_ref}'
         ).interactive()
-        
-        chrome_webdriver = webdriver.Chrome
+
         print("Using Chrome Webdriver")
+        #sys.path.append('/Users/JimBarlow/transformationflow/cloudfunctions/post-data-monitoring-chart-to-slack/chromedriver.exe')
+        #export PATH="$PATH:/Users/JimBarlow/transformationflow/cloudfunctions/post-data-monitoring-chart-to-slack/chromedriver.exe"
+
+        chrome_webdriver = webdriver.Chrome(executable_path=r"/Users/JimBarlow/transformationflow/cloudfunctions/post-data-monitoring-chart-to-slack/chromedriver.exe", service_log_path="/tmp")
         save(inbound_monitoring_chart, chart_path, webdriver=chrome_webdriver)
         
 
@@ -186,6 +190,13 @@ def main_function(event, context=None):
 
 
 # function execution for local test environment
+
+if os.environ.get('ENVIRONMENT_TYPE')  == "TEST":
+    path_to_chromedriver = '/tmp/mac64/chromedriver.exe'
+else:
+    path_to_chromedriver = '/tmp/linux64/chromedriver.exe'
+ 
+
 if os.environ.get('ENVIRONMENT_TYPE')  == "TEST":
 
     test_event = {'attributes': {
@@ -197,6 +208,8 @@ if os.environ.get('ENVIRONMENT_TYPE')  == "TEST":
         'slack_channel': '#ig-monitoring-dev',
         'days_to_display': 60
         }} 
+
+
 
     main_function(test_event)
 
