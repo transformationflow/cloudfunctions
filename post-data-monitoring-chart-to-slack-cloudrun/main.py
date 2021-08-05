@@ -10,7 +10,7 @@ from datetime import datetime
 import os, sys, stat
 from pprint import pprint
 
-from flask import Flask
+from flask import Flask, request
 import requests
 from selenium import webdriver
 import cairosvg
@@ -27,10 +27,21 @@ chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-software-rasterizer")
 
 
-
 @app.route("/", methods=["POST"])
-def main_function(payload):
+def main_function():
     try:    
+
+        # get inbound message
+        envelope = request.get_json()
+        if not envelope:
+            msg = "no Pub/Sub message received"
+            print(f"error: {msg}")
+            return f"Bad Request: {msg}", 400
+
+        if not isinstance(envelope, dict) or "message" not in envelope:
+            msg = "invalid Pub/Sub message format"
+            print(f"error: {msg}")
+            return f"Bad Request: {msg}", 400
 
         # set monitoring chart path
         chart_path = 'tmp/inbound_data_monitoring.svg'
@@ -42,7 +53,7 @@ def main_function(payload):
         now_string = now.strftime("%Y-%m-%d %H:%M:%S")
 
         # get slack attributes from scheduler payload
-        envelope = payload
+        # envelope = payload
         event = envelope["message"]
         print(f"event {envelope}")
         slack_access_token_name = event['attributes']['slack_access_token_name']
@@ -52,7 +63,7 @@ def main_function(payload):
         inbound_monitoring_dataset_ref = event['attributes']['inbound_monitoring_dataset_ref']
         ingest_timestamp_column = event['attributes']['ingest_timestamp_column']
         table_exclusion_clause = event['attributes']['table_exclusion_clause']
-        specific_table_exclusions = event['attributes']['specific_table_exclusions']
+        specific_table_exclusions = event['attributes']['specific_table_exclusions'][1:-1].replace('"', '').replace(' ', '').replace("'", "").split(",")
         days_to_display = event['attributes']['days_to_display']
         
         # construct bigquery client with drive scopes (for accessing federated gsheet tables)
@@ -137,6 +148,8 @@ def main_function(payload):
         ORDER BY ingest_date DESC, table_name
         """
 
+        print(clean_gapless_monitoring_query)
+
         response = BQ.query(query=clean_gapless_monitoring_query)
         monitoring_df = response.to_dataframe()
         monitoring_df["ingest_date"] = pd.to_datetime(monitoring_df["ingest_date"])
@@ -179,6 +192,7 @@ def main_function(payload):
         SM = secretmanager.SecretManagerServiceClient()
         secret_response = SM.access_secret_version(name=secret_name)
         slack_access_token = secret_response.payload.data.decode("UTF-8")
+        print("slack_access_token: ", slack_access_token)
 
         # image processing
         file_bytes=None
@@ -248,5 +262,5 @@ if __name__ == "__main__":
             "subscription": "projects/beepbeeptechnology/subscriptions/cloud-run-post-data-monitoring-chart-to-slack"
     }
 
-        main_function(test_payload)
+        # main_function(test_payload)
     pass
