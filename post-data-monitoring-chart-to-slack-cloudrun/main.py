@@ -118,7 +118,7 @@ def main_function():
         date_array AS (
         SELECT GENERATE_DATE_ARRAY(
         (SELECT MIN(ingest_date) FROM ingest_records), 
-        (SELECT MAX(ingest_date) FROM ingest_records)) AS all_dates
+        (SELECT CURRENT_DATE() )) AS all_dates
         ),
         date_array_flat AS (
         SELECT ingest_date 
