@@ -1,12 +1,15 @@
 import base64
 import json
 import os
+from datetime import datetime
+
 
 from google.cloud import storage
 from google.cloud import bigquery
 
 def main_function(event, context=None):
-    try:
+    try:        
+        
         # get attributes
         gcs_bucket_uri = event['attributes']['gcs_bucket_uri']
         destination_inventory_table_ref = event['attributes']['destination_inventory_table_ref']
