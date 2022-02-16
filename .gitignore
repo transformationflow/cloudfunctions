@@ -4,6 +4,5 @@ load-gcs-bucket-inventory-to-bigquery/venv-gcsinv
 
 post-bigquery-response-to-slack/venv-bqsl
 post-bigquery-response-to-slack/auth
-how-to-guide.md
 load-gcs-bucket-inventory-to-bigquery/.DS_Store
 .DS_Store
