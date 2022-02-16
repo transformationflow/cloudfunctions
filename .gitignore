@@ -1,9 +1,9 @@
+.vscode
+auth
+load-gcs-bucket-inventory-to-bigquery/venv-gcsinv
+
 post-bigquery-response-to-slack/venv-bqsl
 post-bigquery-response-to-slack/auth
-post-data-monitoring-chart-to-slack/venv-dmcsl
-post-data-monitoring-chart-to-slack/auth
-post-data-monitoring-chart-to-slack-cloudrun/venv-dmcsl-cr
-scratch.md
-tmp
-console
-./console
+how-to-guide.md
+load-gcs-bucket-inventory-to-bigquery/.DS_Store
+.DS_Store
